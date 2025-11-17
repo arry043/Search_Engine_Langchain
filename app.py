@@ -32,11 +32,25 @@ StreamlitCallbackHandler is a callback handler that prints to streamlit.
 st.sidebar.title("Search Engine Settings")
 groq_api_key=st.sidebar.text_input("GROQ API Key", type="password")
 
+system_prompt = {
+    "role": "system",
+    "content": """You MUST ALWAYS produce a final helpful answer.
+Do NOT loop. Do NOT keep calling tools again and again.
+Use tools only when needed and ALWAYS return a final answer after using a tool once."""
+}
+
 
 if "messages" not in st.session_state:
     st.session_state['messages'] = [{"role": "assistant", "content": "Hello! How can I help you?"}]
     
-for msg in st.session_state.messages:
+    # Add system prompt at index 0
+    st.session_state["messages"].insert(0, {
+        "role": "system",
+        "content": system_prompt["content"]
+    })
+    
+    
+for msg in st.session_state.messages[1:]:
     st.chat_message(msg["role"]).write(msg["content"])
 
     
@@ -49,6 +63,14 @@ if prompt:=st.chat_input(placeholder="What is Machine Learning?"):
     st.chat_message("user").write(prompt)
     
     llm=ChatGroq(api_key=groq_api_key, model="llama-3.1-8b-instant")
+    # llm = ChatGroq(
+    #     api_key=groq_api_key,
+    #     model="llama-3.1-8b-instant",
+    #     model_kwargs={
+    #         "system_prompt": "You MUST always respond with a complete and helpful answer."
+    #     }
+    # )
+
     tools=[wiki, arxiv, search]
     
     # search_agent=initialize_agent(tools=tools, llm=llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, max_iterations=3, handle_parsing_errors=True)
@@ -56,8 +78,7 @@ if prompt:=st.chat_input(placeholder="What is Machine Learning?"):
         tools=tools,
         llm=llm,
         agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-        # verbose=True,
-        max_iterations=7,
+        verbose=True,
         handle_parsing_errors=True
     )
 
@@ -67,5 +88,4 @@ if prompt:=st.chat_input(placeholder="What is Machine Learning?"):
         # response=search_agent.run(st.session_state.messages, callbacks=[st_callback])
         response = search_agent.run(prompt, callbacks=[st_callback])
         st.session_state.messages.append({"role": "assistant", "content": response})
-
         st.write(response)
