@@ -48,7 +48,7 @@ if prompt:=st.chat_input(placeholder="What is Machine Learning?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
     
-    llm=ChatGroq(api_key=groq_api_key, model="llama-3.1-8b-instant", streaming=True)
+    llm=ChatGroq(api_key=groq_api_key, model="llama-3.1-8b-instant")
     tools=[wiki, arxiv, search]
     
     # search_agent=initialize_agent(tools=tools, llm=llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, max_iterations=3, handle_parsing_errors=True)
@@ -67,4 +67,5 @@ if prompt:=st.chat_input(placeholder="What is Machine Learning?"):
         # response=search_agent.run(st.session_state.messages, callbacks=[st_callback])
         response = search_agent.run(prompt, callbacks=[st_callback])
         st.session_state.messages.append({"role": "assistant", "content": response})
+
         st.write(response)
